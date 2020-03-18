@@ -18,13 +18,13 @@ class Comment extends Component {
                         this.likes++;
                         context.rerender(this);
                     })
-                    .class("like"),
+                    .class("comment-button"),
                 button("Delete")
                     .onClick(() => {
                         comments = comments.filter(item => item !== this);
                         context.rerender("comment-list");
                     })
-                    .class("like")
+                    .class("comment-button")
             ).class("comment-header"),
             newline,
             this.commentText
