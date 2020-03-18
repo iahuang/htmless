@@ -1,0 +1,21 @@
+{
+  "name": "htmless",
+  "version": "1.0.0",
+  "description": "",
+  "main": "htmless.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "terser htmless.js --compress --mangle --output dist/htmless.min.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iahuang/htmless.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/iahuang/htmless/issues"
+  },
+  "homepage": "https://github.com/iahuang/htmless#readme",
+  "devDependencies": {}
+}
