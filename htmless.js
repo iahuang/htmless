@@ -2,76 +2,6 @@
 
 /* HTMLess - a lightweight Javascript library for writing UI elements in JS */
 
-class HLContext {
-    // A manager for HTMLess components
-
-    constructor() {
-        // A component-DOM lookup table
-        // key: Component instance
-        // value: array of DOM elements that correspond to each rendered instance of the component
-        this.components = new Map();
-
-        this.inlineComponents = {};
-    }
-    renderComponent(component) {
-        let rendered = HTMLess.valueToNode(component.body(this), this);
-
-        if (rendered instanceof DocumentFragment) {
-            throw new Error(
-                "For simplicity, component bodies cannot be document fragments (a node representing multiple elements). Try encapsulating it inside a div"
-            );
-        }
-
-        if (this.components.has(component)) {
-            // in the case that the component is used multiple times, track all instances of it in the DOM
-            this.components.get(component).push(rendered);
-        } else {
-            this.components.set(component, [rendered]);
-        }
-
-        return rendered;
-    }
-
-    inlineComponent(f, id) {
-        let comp = new Component();
-        comp.body = f;
-
-        this.inlineComponents[id] = comp;
-        return comp;
-    }
-
-    getInlineComponent(id) {
-        let component = this.inlineComponents[id];
-        if (component === undefined) {
-            throw new Error("No inline component with id '"+id+"' exists");
-        }
-        return component;
-    }
-
-    rerenderComponent(component) {
-        let elementsToReplace = this.components.get(component);
-        this.components.set(component, []); // clear
-
-        for (let element of elementsToReplace) {
-            let rendered = component.body(this).render(this);
-            element.replaceWith(rendered);
-            this.components.get(component).push(rendered);
-        }
-    }
-
-    rerenderInlineComponent(id) {
-        this.rerenderComponent(this.getInlineComponent(id));
-    }
-
-    rerender(x) {
-        if (x instanceof Component) {
-            this.rerenderComponent(x);
-        } else {
-            this.rerenderInlineComponent(x);
-        }
-    }
-}
-
 class HLElement {
     constructor(tagName, children = []) {
         this.classes = [];
@@ -148,7 +78,7 @@ class HLElement {
     }
 
     // Represent this HLElement as an HTML Element
-    render(context = null) {
+    render() {
         let htmlElement = document.createElement(this.tagName);
 
         // Set element class(es)
@@ -163,7 +93,7 @@ class HLElement {
 
         // Build content
         for (let child of this.children) {
-            let childNode = HTMLess.valueToNode(child, context);
+            let childNode = htmless.valueToNode(child);
             htmlElement.appendChild(childNode);
         }
 
@@ -193,30 +123,97 @@ class InlineHTMLElement {
 }
 
 class HTMLess {
-    static valueToNode(value, context) {
-        // console.log("rendering:", value, "\nin context:",context);
+    constructor() {
+        // A component-DOM lookup table
+        // key: Component instance
+        // value: array of DOM elements that correspond to each rendered instance of the component
+        this.trackedElements = new Map();
+
+        this.inlineComponents = {};
+    }
+    renderComponent(component) {
+        let rendered = this.valueToNode(component.body());
+
+        if (rendered instanceof DocumentFragment) {
+            throw new Error(
+                "For simplicity, component bodies cannot be document fragments (a node representing multiple elements). Try encapsulating it inside a div"
+            );
+        }
+
+        this.trackedElements.set(rendered, component);
+
+        return rendered;
+    }
+
+    inlineComponent(f, id) {
+        let comp = new Component();
+        comp.body = f;
+
+        this.inlineComponents[id] = comp;
+        return comp;
+    }
+
+    getInlineComponent(id) {
+        let component = this.inlineComponents[id];
+        if (component === undefined) {
+            throw new Error("No inline component with id '"+id+"' exists");
+        }
+        return component;
+    }
+
+    rerenderComponent(component) {
+        let elementsToReplace = [];
+        for (let [element, associatedComponent] of this.trackedElements.entries()) {
+            if (component === associatedComponent) {
+                elementsToReplace.push(element);
+            }
+        }
+
+        for (let element of elementsToReplace) {
+            this.trackedElements.delete(element); // remove
+            let rendered = component.body().render();
+            element.replaceWith(rendered);
+            this.trackedElements.set(rendered, component);
+        }
+
+        // garbage collection
+
+        for (let element of this.trackedElements.keys()) {
+            if (!document.contains(element)) {
+                this.trackedElements.delete(element);
+            }
+        }
+    }
+
+    rerenderInlineComponent(id) {
+        this.rerenderComponent(this.getInlineComponent(id));
+    }
+
+    rerender(x) {
+        if (x instanceof Component) {
+            this.rerenderComponent(x);
+        } else {
+            this.rerenderInlineComponent(x);
+        }
+    }
+    valueToNode(value) {
         // Take a value of an arbitrary type and represent it as an HTML element
         if (typeof value !== "object") {
             return document.createTextNode(value);
         }
         if (value instanceof Component) {
-            if (!context) {
-                throw new Error(
-                    "Cannot use Component outside of a HTMLess Context."
-                );
-            }
-            let rendered = context.renderComponent(value);
+            let rendered = htmless.renderComponent(value);
             return rendered;
         }
         if (value instanceof Array) {
             let frag = document.createDocumentFragment();
             for (let n of value) {
-                frag.appendChild(HTMLess.valueToNode(n, context));
+                frag.appendChild(this.valueToNode(n));
             }
             return frag;
         }
         if (value.render) {
-            return value.render(context);
+            return value.render();
         }
         throw new Error("Invalid child type");
     }
@@ -459,3 +456,4 @@ class Component {
     }
 }
 
+let htmless = new HTMLess();

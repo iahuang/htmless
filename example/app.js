@@ -1,5 +1,3 @@
-let context = new HLContext();
-
 let comments = [];
 
 class Comment extends Component {
@@ -9,20 +7,20 @@ class Comment extends Component {
         this.commentText = commentText;
     }
 
-    body(context) {
+    body() {
         return div(
             span(
                 this.likes + " likes",
                 button("Like")
                     .onClick(() => {
                         this.likes++;
-                        context.rerender(this);
+                        htmless.rerender(this);
                     })
                     .class("comment-button"),
                 button("Delete")
                     .onClick(() => {
                         comments = comments.filter(item => item !== this);
-                        context.rerender("comment-list");
+                        htmless.rerender("comment-list");
                     })
                     .class("comment-button")
             ).class("comment-header"),
@@ -34,7 +32,7 @@ class Comment extends Component {
 
 let app = div(
     div(headers.h1("Example app"), headers.h2("Comments:").italicized()),
-    context.inlineComponent(() => {
+    htmless.inlineComponent(() => {
         return div(comments);
     }, "comment-list"),
     input.text()
@@ -44,9 +42,9 @@ let app = div(
     button("Post").onClick(() => {
         let commentText = document.getElementById("comment").value;
         comments.push(new Comment(commentText, 0));
-        context.rerender("comment-list");
+        htmless.rerender("comment-list");
         document.getElementById("comment").value = "";
     })
 );
 
-document.body.appendChild(app.render(context));
+document.body.appendChild(app.render());
