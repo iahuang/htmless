@@ -9,8 +9,7 @@ HTMLess is centered around keeping a feel similar to that is familiar in HTML sy
 ```js
 let page = div(
     headers.h1("Header"),
-    // longhand for <p>
-    paragraph("lorem ipsum etc etc"),
+    "lorem ipsum etc etc",
     // equivalent to <em><a href="..."> ... </a><em>
     hyperlink("google")
         .href("http://google.com")
@@ -193,35 +192,12 @@ Because we want our Components to serve as not only a UI definition but also a d
 let comments = [];
 
 class Comment extends Component {
-    constructor(commentText, likes) {
-        super();
-        this.likes = likes;
-        this.commentText = commentText;
-    }
-
-    body() {
-        return div(
-            span(
-                this.likes + " likes",
-                button("Like")
-                    .onClick(() => {
-                        // ...
-                    })
-                    .class("comment-button"),
-                button("Delete")
-                    .onClick(() => {
-                        // ...
-                    })
-                    .class("comment-button")
-            ).class("comment-header"),
-            newline,
-            this.commentText
-        ).class("comment");
-    }
+    // ...
 }
 
 let app = div(
     div(headers.h1("Example app"), headers.h2("Comments:").italicized()),
+    new Comment("sfdakljfadkjdfa lsdajl; sadfjfsad", 0), // dummy comment for testing purposes
     input.text()
         .maxlength(100)
         .placeholder("Your comment")
@@ -294,3 +270,129 @@ button("Like")
 ```
 
 Now, if you were to run the app, the number of likes should update properly when you click the "like" button. You may notice that the "delete" button still doesn't do anything. We'll get to that later.
+
+We also still haven't actually rendered our list of comments. Because the list changes as our comments variable changes, our comments list is a dynamic UI element, and therefore should also be a component.
+
+```js
+class CommentsList extends Component {
+    constructor() {
+        super();
+        this.comments = [];
+    }
+    body() {
+        return div(this.comments); // Returning an array of Components (or any other renderable type) will render all of them sequentially as expected
+    }
+}
+
+let comments = new CommentsList();
+```
+
+This is a lot of boilerplate code. That's why HTMLess has a feature called inline components.
+
+### Inline Components
+
+```js
+let comments = [];
+
+context.inlineComponent(() => {
+    return div(comments);
+}, "comment-list")
+```
+
+Inline components are created through the context object, and take two arguments. The first is a function that returns the component body, and the second is the component identifier. This is important because, as you might expect, inline components are declared within a larger expression and thus have no other way of being referenced later on.
+
+You can refer to an inline component using `context.getInlineComponent(id)`, which will return the component in question.
+
+Here's the body of our app now:
+
+```js
+let comments = [];
+
+let app = div(
+    div(headers.h1("Example app"), headers.h2("Comments:").italicized()),
+    // Our new inline comment list component
+    context.inlineComponent(() => {
+        return div(comments);
+    }, "comment-list"),
+    input.text()
+        .maxlength(100)
+        .placeholder("Your comment")
+        .id("comment"),
+    button("Post").onClick(() => {
+        let commentText = document.getElementById("comment").value;
+        comments.push(new Comment(commentText, 0));
+        context.rerender("comment-list"); // Update the list component
+        document.getElementById("comment").value = "";
+    })
+);
+```
+
+Note the line `context.rerender("comment-list");`. For convenience, if a string is passed to `rerender` instead of a component object, it will assume the argument to be a component identifier instead.
+
+Lastly let's write the code for our "delete comment" button since we haven't done that yet
+
+```js
+button("Delete")
+    .onClick(() => {
+        comments = comments.filter(item => item !== this); // remove this comment component from the list of comments
+        context.rerender("comment-list");
+    })
+    .class("comment-button")
+```
+
+### Putting it all together
+
+```js
+let context = new HLContext();
+
+let comments = [];
+
+class Comment extends Component {
+    constructor(commentText, likes) {
+        super();
+        this.likes = likes;
+        this.commentText = commentText;
+    }
+
+    body(context) {
+        return div(
+            span(
+                this.likes + " likes",
+                button("Like")
+                    .onClick(() => {
+                        this.likes++;
+                        context.rerender(this);
+                    })
+                    .class("comment-button"),
+                button("Delete")
+                    .onClick(() => {
+                        comments = comments.filter(item => item !== this);
+                        context.rerender("comment-list");
+                    })
+                    .class("comment-button")
+            ).class("comment-header"),
+            newline,
+            this.commentText
+        ).class("comment");
+    }
+}
+
+let app = div(
+    div(headers.h1("Example app"), headers.h2("Comments:").italicized()),
+    context.inlineComponent(() => {
+        return div(comments);
+    }, "comment-list"),
+    input.text()
+        .maxlength(100)
+        .placeholder("Your comment")
+        .id("comment"),
+    button("Post").onClick(() => {
+        let commentText = document.getElementById("comment").value;
+        comments.push(new Comment(commentText, 0));
+        context.rerender("comment-list");
+        document.getElementById("comment").value = "";
+    })
+);
+
+document.body.appendChild(app.render(context));
+```
