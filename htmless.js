@@ -41,7 +41,11 @@ class HLContext {
     }
 
     getInlineComponent(id) {
-        return this.inlineComponents[id];
+        let component = this.inlineComponents[id];
+        if (component === undefined) {
+            throw new Error("No inline component with id '"+id+"' exists");
+        }
+        return component;
     }
 
     rerenderComponent(component) {
@@ -198,7 +202,7 @@ class HTMLess {
         if (value instanceof Component) {
             if (!context) {
                 throw new Error(
-                    "Cannot use Component outside of a HTMLess Context. Try using HTMLess.loadApplication which will automatically handle this for you."
+                    "Cannot use Component outside of a HTMLess Context."
                 );
             }
             let rendered = context.renderComponent(value);
@@ -215,14 +219,6 @@ class HTMLess {
             return value.render(context);
         }
         throw new Error("Invalid child type");
-    }
-    static loadApplication(el) {
-        let context = new HLContext();
-        document.body.appendChild(el.render(context));
-    }
-    static loadApplicationFunction(f) {
-        let context = new HLContext();
-        document.body.appendChild(f(context).render(context));
     }
 }
 
