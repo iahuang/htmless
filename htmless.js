@@ -194,7 +194,7 @@ class InlineHTMLElement {
 
 class HTMLess {
     static valueToNode(value, context) {
-        console.log("rendering:", value, "\nin context:",context);
+        // console.log("rendering:", value, "\nin context:",context);
         // Take a value of an arbitrary type and represent it as an HTML element
         if (typeof value !== "object") {
             return document.createTextNode(value);
