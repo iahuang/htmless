@@ -130,6 +130,7 @@ class HTMLess {
         this.trackedElements = new Map();
 
         this.inlineComponents = {};
+        this.inlineComponentLabels = {};
     }
     renderComponent(component) {
         let rendered = this.valueToNode(component.body());
@@ -146,7 +147,7 @@ class HTMLess {
     }
 
     inlineComponent(f, id) {
-        let comp = new Component();
+        let comp = new InlineComponent(id);
         comp.body = f;
 
         this.inlineComponents[id] = comp;
@@ -156,14 +157,26 @@ class HTMLess {
     getInlineComponent(id) {
         let component = this.inlineComponents[id];
         if (component === undefined) {
-            throw new Error("No inline component with id '"+id+"' exists");
+            throw new Error("No inline component with id '" + id + "' exists");
         }
         return component;
     }
 
+    getInlineComponentsByLabel(label) {
+        let componentIds = this.inlineComponentLabels[label];
+        if (componentIds === undefined) {
+            throw new Error("No such label '" + label + "' exists");
+        }
+
+        return componentIds.map(id=>this.getInlineComponent(id));
+    }
+
     rerenderComponent(component) {
         let elementsToReplace = [];
-        for (let [element, associatedComponent] of this.trackedElements.entries()) {
+        for (let [
+            element,
+            associatedComponent
+        ] of this.trackedElements.entries()) {
             if (component === associatedComponent) {
                 elementsToReplace.push(element);
             }
@@ -196,6 +209,14 @@ class HTMLess {
             this.rerenderInlineComponent(x);
         }
     }
+
+    rerenderLabel(label) {
+        let components = this.getInlineComponentsByLabel(label);
+        for (let c of components) {
+            this.rerender(c);
+        }
+    }
+
     valueToNode(value) {
         // Take a value of an arbitrary type and represent it as an HTML element
         if (typeof value !== "object") {
@@ -216,6 +237,18 @@ class HTMLess {
             return value.render();
         }
         throw new Error("Invalid child type");
+    }
+
+    labelComponent(c, label) {
+        if (c instanceof InlineComponent) {
+            if (this.inlineComponentLabels[label]) {
+                this.inlineComponentLabels[label].push(c.id);
+            } else {
+                this.inlineComponentLabels[label] = [c.id];
+            }
+        } else {
+            throw new Error("Cannot label non-inline component");
+        }
     }
 }
 
@@ -453,6 +486,17 @@ let inlineHTML = function(html) {
 class Component {
     body() {
         throw new Error("No render method specified for this component");
+    }
+}
+
+class InlineComponent extends Component {
+    constructor(id) {
+        super();
+        this.id = id;
+    }
+    label(l) {
+        htmless.labelComponent(this, l);
+        return this;
     }
 }
 

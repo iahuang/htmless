@@ -20,7 +20,7 @@ class Comment extends Component {
                 button("Delete")
                     .onClick(() => {
                         comments = comments.filter(item => item !== this);
-                        htmless.rerender("comment-list");
+                        htmless.rerenderLabel("test-label");
                     })
                     .class("comment-button")
             ).class("comment-header"),
@@ -32,17 +32,20 @@ class Comment extends Component {
 
 let app = div(
     div(headers.h1("Example app"), headers.h2("Comments:").italicized()),
-    htmless.inlineComponent(() => {
-        return div(comments);
-    }, "comment-list"),
-    input.text()
+    htmless
+        .inlineComponent(() => {
+            return div(comments);
+        }, "comment-list")
+        .label("test-label"),
+    input
+        .text()
         .maxlength(100)
         .placeholder("Your comment")
         .id("comment"),
     button("Post").onClick(() => {
         let commentText = document.getElementById("comment").value;
         comments.push(new Comment(commentText, 0));
-        htmless.rerender("comment-list");
+        htmless.rerenderLabel("test-label");
         document.getElementById("comment").value = "";
     })
 );
