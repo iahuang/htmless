@@ -1,11 +1,15 @@
 /* HTMLess - a lightweight Javascript library for writing UI elements in JS */
 
+interface ObjectConstructor {
+    entries(obj: { [key: string]: any }): [string, any][];
+}
+
 interface Object {
-    entries: (obj: { [key: string]: any }) => any[];
+    entries(): [string, any][];
 }
 
 if (!Object.entries) {
-    Object.entries = function (obj: { [key: string]: any }) {
+    Object.entries = function(obj: { [key: string]: any }) {
         var ownProps = Object.keys(obj),
             i = ownProps.length,
             resArray = new Array(i); // preallocate the Array
@@ -15,6 +19,9 @@ if (!Object.entries) {
     };
 }
 
+Object.prototype.entries = function() {
+    return Object.entries(this);
+}
 interface HLEventListener {
     type: string;
     callback: EventCallback;
@@ -113,7 +120,7 @@ class HLElement {
         }
 
         // Set HTML attributes
-        for (let [attr, e] of Object.entries(this.attrs)) {
+        for (let [attr, e] of this.attrs.entries()) {
             htmlElement.setAttribute(attr, e);
         }
 
