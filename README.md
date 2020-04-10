@@ -212,20 +212,9 @@ let app = div(
 document.body.appendChild(app.render());
 ```
 
-### Context API
+### `htmless` instance
 
-Components are managed through an HTMLess Context object (`HLContext`). One of the core features of components is that they are dynamic, which means they can be rerendered as needed, or in particular, when their data changes. The HLContext object is responsible for keeping track of the relationship between your components and the DOM tree, and is what allows us to do this. We can create and use a HTMLess Context by using the following code
-
-```js
-let context = new HLContext();
-let app = div(
-    // ...
-);
-
-document.body.appendChild(app.render(context)); // remember to pass the context to the render function
-```
-
-Okay but what do we do with this?
+Components are managed through a HTMLess instance (`window.htmless`) which serves as the *context* for your application. One of the core features of components is that they are dynamic, which means they can be rerendered as needed, or in particular, when their data changes. The htmless instance is responsible for keeping track of the relationship between your components and the DOM tree, and is what allows us to do this.
 
 Notice how our comment box has a like button that, in the previous code snippets, didn't actually do anything. If we modify our Comment component code to increment its like counter like so
 
@@ -259,13 +248,13 @@ class Comment extends Component {
 }
 ```
 
-You would notice (if you were to run the app), that the button still doesn't actually do anything. Why is that? We've updated the data driving the UI element but we haven't actually updated the UI element itself. This is where the HTMLess Context comes in. One of its most important methods is `HLContext.rerender(component)`. When you call it, the HTML elements associated with the component passed to it, or in other words, the component itself, is redrawn, reflecting any changes in the DOM tree. Let's tell our button to `rerender` its parent Comment object when it's clicked.
+You would notice (if you were to run the app), that the button still doesn't actually do anything. Why is that? We've updated the data driving the UI element but we haven't actually updated the UI element itself. This is where the `htmless` instance comes in. One of its most important methods is `htmless.rerender(component)`. When you call it, the HTML elements associated with the component passed to it, or in other words, the component itself, is redrawn, reflecting any changes in the DOM tree. Let's tell our button to `rerender` its parent Comment object when it's clicked.
 
 ```js
 button("Like")
     .onClick(() => {
         this.likes += 1;
-        context.rerender(this);
+        htmless.rerender(this);
     })
 ```
 
@@ -294,14 +283,14 @@ This is a lot of boilerplate code. That's why HTMLess has a feature called inlin
 ```js
 let comments = [];
 
-context.inlineComponent(() => {
+htmless.inlineComponent(() => {
     return div(comments);
 }, "comment-list")
 ```
 
-Inline components are created through the context object, and take two arguments. The first is a function that returns the component body, and the second is the component identifier. This is important because, as you might expect, inline components are declared within a larger expression and thus have no other way of being referenced later on.
+Inline components are created through the htmless instance, and take two arguments. The first is a function that returns the component body, and the second is the component identifier. This is important because, as you might expect, inline components are declared within a larger expression and thus have no other way of being referenced later on.
 
-You can refer to an inline component using `context.getInlineComponent(id)`, which will return the component in question.
+You can refer to an inline component using `htmless.getInlineComponent(id)`, which will return the component in question.
 
 Here's the body of our app now:
 
@@ -311,7 +300,7 @@ let comments = [];
 let app = div(
     div(headers.h1("Example app"), headers.h2("Comments:").italicized()),
     // Our new inline comment list component
-    context.inlineComponent(() => {
+    htmless.inlineComponent(() => {
         return div(comments);
     }, "comment-list"),
     input.text()
@@ -321,13 +310,13 @@ let app = div(
     button("Post").onClick(() => {
         let commentText = document.getElementById("comment").value;
         comments.push(new Comment(commentText, 0));
-        context.rerender("comment-list"); // Update the list component
+        htmless.rerender("comment-list"); // Update the list component
         document.getElementById("comment").value = "";
     })
 );
 ```
 
-Note the line `context.rerender("comment-list");`. For convenience, if a string is passed to `rerender` instead of a component object, it will assume the argument to be a component identifier instead.
+Note the line `htmless.rerender("comment-list");`. For convenience, if a string is passed to `rerender` instead of a component object, it will assume the argument to be a component identifier instead.
 
 Lastly let's write the code for our "delete comment" button since we haven't done that yet
 
@@ -335,7 +324,7 @@ Lastly let's write the code for our "delete comment" button since we haven't don
 button("Delete")
     .onClick(() => {
         comments = comments.filter(item => item !== this); // remove this comment component from the list of comments
-        context.rerender("comment-list");
+        htmless.rerender("comment-list");
     })
     .class("comment-button")
 ```
@@ -343,8 +332,6 @@ button("Delete")
 ### Putting it all together
 
 ```js
-let context = new HLContext();
-
 let comments = [];
 
 class Comment extends Component {
@@ -354,20 +341,20 @@ class Comment extends Component {
         this.commentText = commentText;
     }
 
-    body(context) {
+    body() {
         return div(
             span(
                 this.likes + " likes",
                 button("Like")
                     .onClick(() => {
                         this.likes++;
-                        context.rerender(this);
+                        htmless.rerender(this);
                     })
                     .class("comment-button"),
                 button("Delete")
                     .onClick(() => {
                         comments = comments.filter(item => item !== this);
-                        context.rerender("comment-list");
+                        htmless.rerender("comment-list");
                     })
                     .class("comment-button")
             ).class("comment-header"),
@@ -379,7 +366,7 @@ class Comment extends Component {
 
 let app = div(
     div(headers.h1("Example app"), headers.h2("Comments:").italicized()),
-    context.inlineComponent(() => {
+    htmless.inlineComponent(() => {
         return div(comments);
     }, "comment-list"),
     input.text()
@@ -389,10 +376,10 @@ let app = div(
     button("Post").onClick(() => {
         let commentText = document.getElementById("comment").value;
         comments.push(new Comment(commentText, 0));
-        context.rerender("comment-list");
+        htmless.rerender("comment-list");
         document.getElementById("comment").value = "";
     })
 );
 
-document.body.appendChild(app.render(context));
+document.body.appendChild(app.render());
 ```

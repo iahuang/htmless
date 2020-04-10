@@ -487,6 +487,9 @@ class Component {
     body() {
         throw new Error("No render method specified for this component");
     }
+    render() {
+        return htmless.renderComponent(this);
+    }
 }
 
 class InlineComponent extends Component {
