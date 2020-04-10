@@ -9,7 +9,7 @@ interface Object {
 }
 
 if (!Object.entries) {
-    Object.entries = function(obj: { [key: string]: any }) {
+    Object.entries = function (obj: { [key: string]: any }) {
         var ownProps = Object.keys(obj),
             i = ownProps.length,
             resArray = new Array(i); // preallocate the Array
@@ -19,9 +19,9 @@ if (!Object.entries) {
     };
 }
 
-Object.prototype.entries = function() {
+Object.prototype.entries = function () {
     return Object.entries(this);
-}
+};
 interface HLEventListener {
     type: string;
     callback: EventCallback;
@@ -290,23 +290,23 @@ class HTMLess {
     }
 }
 
-function elementWithAttrSetters(...attrNames: string[]) {
-    // Returns a subclass of HLElement with boilerplate methods added for setting attributes
+// function elementWithAttrSetters(...attrNames: string[]) {
+//     // Returns a subclass of HLElement with boilerplate methods added for setting attributes
 
-    let target = class extends HLElement {};
+//     let target = class extends HLElement {};
 
-    for (let attr of attrNames) {
-        (target.prototype as any)[attr] = function (value: string) {
-            this.attrs[attr] = value;
-            return this;
-        };
-    }
-    return target;
-}
+//     for (let attr of attrNames) {
+//         (target.prototype as any)[attr] = function (value: string) {
+//             this.attrs[attr] = value;
+//             return this;
+//         };
+//     }
+//     return target;
+// }
 
-function elementFunction(tagName: string, T = HLElement) {
+function elementFunction(tagName: string, type = HLElement) {
     return (...children: any[]) => {
-        return new T(tagName, children);
+        return new type(tagName, children);
     };
 }
 
@@ -319,7 +319,23 @@ let hr = new HLElement("hr");
 // Text
 
 let paragraph = elementFunction("p");
-let hyperlink = elementFunction("a", elementWithAttrSetters("href"));
+
+class HLHyperlinkElement extends HLElement {
+    href(dest: string) {
+        return this.setAttr("href", dest);
+    }
+    download(value: string) {
+        return this.setAttr("download", value);
+    }
+    target(where: string) {
+        return this.setAttr("target", where);
+    }
+}
+
+let hyperlink = function (...children: any[]) {
+    return new HLHyperlinkElement("a", children);
+}
+
 let headers = {
     h1: elementFunction("h1"),
     h2: elementFunction("h2"),
@@ -339,16 +355,29 @@ let codeBlock = elementFunction("code");
 
 // Media
 
+class HLImageElement extends HLElement {
+    alt(value: string) {
+        return this.setAttr("alt", value);
+    }
+    crossorigin(mode: "anonymous"|"use-credentials") {
+        return this.setAttr("crossorigin", mode);
+    }
+    decoding(mode: "sync"|"async"|"auto") {
+        return this.setAttr("decoding", mode);
+    }
+    height(h: number) {
+        return this.setAttr("height", h);
+    }
+    width(w: number) {
+        return this.setAttr("width", w);
+    }
+    loading(mode: "eager"|"lazy") {
+        return this.setAttr("loading", mode);
+    }
+}
+
 let image = function (src: string) {
-    let subclass = elementWithAttrSetters(
-        "alt",
-        "crossorigin",
-        "decoding",
-        "height",
-        "width",
-        "loading"
-    );
-    return new subclass("img").setAttr("src", src);
+    return new HLImageElement("img").setAttr("src", src);
 };
 
 class HLVideoElement extends HLElement {
