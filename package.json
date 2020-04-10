@@ -5,7 +5,7 @@
   "main": "htmless.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "terser htmless.js --compress --mangle --output dist/htmless.min.js"
+    "build": "tsc; terser dist/htmless.js --compress --mangle --output dist/htmless.min.js"
   },
   "repository": {
     "type": "git",
