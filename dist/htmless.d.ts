@@ -1,7 +1,10 @@
-interface Object {
-    entries: (obj: {
+interface ObjectConstructor {
+    entries(obj: {
         [key: string]: any;
-    }) => any[];
+    }): [string, any][];
+}
+interface Object {
+    entries(): [string, any][];
 }
 interface HLEventListener {
     type: string;

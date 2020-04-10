@@ -8,6 +8,9 @@ if (!Object.entries) {
         return resArray;
     };
 }
+Object.prototype.entries = function () {
+    return Object.entries(this);
+};
 class HLElement {
     constructor(tagName, children = []) {
         this.classes = [];
@@ -80,7 +83,7 @@ class HLElement {
             htmlElement.classList.add(...this.classes);
         }
         // Set HTML attributes
-        for (let [attr, e] of Object.entries(this.attrs)) {
+        for (let [attr, e] of this.attrs.entries()) {
             htmlElement.setAttribute(attr, e);
         }
         // Build content
