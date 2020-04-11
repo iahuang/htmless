@@ -1,5 +1,4 @@
 "use strict";
-/* HTMLess - a lightweight Javascript library for writing UI elements in JS */
 if (!Object.entries) {
     Object.entries = function (obj) {
         var ownProps = Object.keys(obj), i = ownProps.length, resArray = new Array(i); // preallocate the Array
@@ -96,17 +95,6 @@ class HLElement {
             htmlElement.addEventListener(listener.type, listener.callback, listener.capture);
         }
         return htmlElement;
-    }
-}
-class InlineHTMLElement {
-    // Represents HTML code as a string literal
-    constructor(content) {
-        this.content = content;
-    }
-    render() {
-        var tpl = document.createElement("template");
-        tpl.innerHTML = this.content;
-        return tpl.content;
     }
 }
 class HTMLess {
@@ -218,30 +206,26 @@ class HTMLess {
         }
     }
 }
-function elementWithAttrSetters(...attrNames) {
-    // Returns a subclass of HLElement with boilerplate methods added for setting attributes
-    let target = class extends HLElement {
-    };
-    for (let attr of attrNames) {
-        target.prototype[attr] = function (value) {
-            this.attrs[attr] = value;
-            return this;
-        };
-    }
-    return target;
-}
-function elementFunction(tagName, T = HLElement) {
+/* HTMLess - a lightweight Javascript library for writing UI elements in JS */
+/// <reference path="htmless/core.ts" />
+function elementFunction(tagName, type = HLElement) {
     return (...children) => {
-        return new T(tagName, children);
+        return new type(tagName, children);
     };
 }
+// Misc
+let inlineHTML = function (html) {
+    return new InlineHTMLElement(html);
+};
 // Organization
 let div = elementFunction("div");
 let span = elementFunction("span");
 let hr = new HLElement("hr");
 // Text
 let paragraph = elementFunction("p");
-let hyperlink = elementFunction("a", elementWithAttrSetters("href"));
+let hyperlink = function (...children) {
+    return new HLHyperlinkElement("a", children);
+};
 let headers = {
     h1: elementFunction("h1"),
     h2: elementFunction("h2"),
@@ -257,110 +241,16 @@ let subscript = elementFunction("sub");
 let codeBlock = elementFunction("code");
 // Media
 let image = function (src) {
-    let subclass = elementWithAttrSetters("alt", "crossorigin", "decoding", "height", "width", "loading");
-    return new subclass("img").setAttr("src", src);
+    return new HLImageElement(src);
 };
-class HLVideoElement extends HLElement {
-    autoplay() {
-        return this.setAttr("autoplay");
-    }
-    controls() {
-        return this.setAttr("autoplay");
-    }
-    width(x) {
-        return this.setAttr("width", x);
-    }
-    height(x) {
-        return this.setAttr("height", x);
-    }
-    loop() {
-        return this.setAttr("loop");
-    }
-    muted() {
-        return this.setAttr("muted");
-    }
-    poster(p) {
-        return this.setAttr("poster", p);
-    }
-    src(s) {
-        return this.setAttr("src", s);
-    }
-}
-let video = elementFunction("video", HLVideoElement);
+let video = function () {
+    return new HLVideoElement();
+};
 // Form
 let button = elementFunction("button");
-class HLInputElement extends HLElement {
-    constructor(type) {
-        super("input", []);
-        this.attrs["type"] = type;
-    }
-    disabled(d = true) {
-        return this.setAttr("disabled", d);
-    }
-    readonly(d = true) {
-        return this.setAttr("readonly", d);
-    }
-    placeholder(p) {
-        return this.setAttr("placeholder", p);
-    }
-    autocomplete(a = true) {
-        return this.setAttr("autocomplete", a);
-    }
-    name(n) {
-        return this.setAttr("name", n);
-    }
-    initialValue(v) {
-        return this.setAttr("value", v);
-    }
-}
 // text fields
-class HLTextField extends HLInputElement {
-    constructor(type) {
-        super(type);
-    }
-    maxlength(l) {
-        return this.setAttr("maxlength", l);
-    }
-    minlength(l) {
-        return this.setAttr("minlength", l);
-    }
-    min(x) {
-        return this.setAttr("min", x);
-    }
-    max(x) {
-        return this.setAttr("max", x);
-    }
-    pattern(p) {
-        return this.setAttr("pattern", p);
-    }
-    multiple(x = true) {
-        return this.setAttr("multiple", x);
-    }
-    size(x) {
-        return this.setAttr("size", x);
-    }
-}
 // date / time
-class HLDateField extends HLInputElement {
-    constructor() {
-        super("checkbox");
-    }
-}
 // other
-class HLFileUpload extends HLInputElement {
-    constructor() {
-        super("file");
-    }
-    allowedFileTypes(types) {
-        return this.setAttr("accept", types.join(","));
-    }
-    multiple(x = true) {
-        return this.setAttr("multiple", x);
-    }
-    capture(x) {
-        return this.setAttr("capture", x);
-    }
-}
 let input = {
     // text fields
     text: () => {
@@ -413,9 +303,7 @@ let input = {
     },
 };
 // Misc
-let inlineHTML = function (html) {
-    return new InlineHTMLElement(html);
-};
+let htmless = new HTMLess();
 class Component {
     body() {
         throw new Error("No render method specified for this component");
@@ -434,4 +322,158 @@ class InlineComponent extends Component {
         return this;
     }
 }
-let htmless = new HTMLess();
+if (!Object.entries) {
+    Object.entries = function (obj) {
+        var ownProps = Object.keys(obj), i = ownProps.length, resArray = new Array(i); // preallocate the Array
+        while (i--)
+            resArray[i] = [ownProps[i], obj[ownProps[i]]];
+        return resArray;
+    };
+}
+Object.prototype.entries = function () {
+    return Object.entries(this);
+};
+class HLInputElement extends HLElement {
+    constructor(type) {
+        super("input", []);
+        this.attrs["type"] = type;
+    }
+    disabled(d = true) {
+        return this.setAttr("disabled", d);
+    }
+    readonly(d = true) {
+        return this.setAttr("readonly", d);
+    }
+    placeholder(p) {
+        return this.setAttr("placeholder", p);
+    }
+    autocomplete(a = true) {
+        return this.setAttr("autocomplete", a);
+    }
+    name(n) {
+        return this.setAttr("name", n);
+    }
+    initialValue(v) {
+        return this.setAttr("value", v);
+    }
+}
+class HLDateField extends HLInputElement {
+    constructor() {
+        super("checkbox");
+    }
+}
+class HLFileUpload extends HLInputElement {
+    constructor() {
+        super("file");
+    }
+    allowedFileTypes(types) {
+        return this.setAttr("accept", types.join(","));
+    }
+    multiple(x = true) {
+        return this.setAttr("multiple", x);
+    }
+    capture(x) {
+        return this.setAttr("capture", x);
+    }
+}
+class HLTextField extends HLInputElement {
+    constructor(type) {
+        super(type);
+    }
+    maxlength(l) {
+        return this.setAttr("maxlength", l);
+    }
+    minlength(l) {
+        return this.setAttr("minlength", l);
+    }
+    min(x) {
+        return this.setAttr("min", x);
+    }
+    max(x) {
+        return this.setAttr("max", x);
+    }
+    pattern(p) {
+        return this.setAttr("pattern", p);
+    }
+    multiple(x = true) {
+        return this.setAttr("multiple", x);
+    }
+    size(x) {
+        return this.setAttr("size", x);
+    }
+}
+class InlineHTMLElement {
+    // Represents HTML code as a string literal
+    constructor(content) {
+        this.content = content;
+    }
+    render() {
+        var tpl = document.createElement("template");
+        tpl.innerHTML = this.content;
+        return tpl.content;
+    }
+}
+class HLImageElement extends HLElement {
+    constructor(src) {
+        super("img");
+        this.setAttr("src", src);
+    }
+    alt(value) {
+        return this.setAttr("alt", value);
+    }
+    crossorigin(mode) {
+        return this.setAttr("crossorigin", mode);
+    }
+    decoding(mode) {
+        return this.setAttr("decoding", mode);
+    }
+    height(h) {
+        return this.setAttr("height", h);
+    }
+    width(w) {
+        return this.setAttr("width", w);
+    }
+    loading(mode) {
+        return this.setAttr("loading", mode);
+    }
+}
+class HLVideoElement extends HLElement {
+    constructor() {
+        super("video");
+    }
+    autoplay() {
+        return this.setAttr("autoplay");
+    }
+    controls() {
+        return this.setAttr("autoplay");
+    }
+    width(x) {
+        return this.setAttr("width", x);
+    }
+    height(x) {
+        return this.setAttr("height", x);
+    }
+    loop() {
+        return this.setAttr("loop");
+    }
+    muted() {
+        return this.setAttr("muted");
+    }
+    poster(p) {
+        return this.setAttr("poster", p);
+    }
+    src(s) {
+        return this.setAttr("src", s);
+    }
+}
+class HLHyperlinkElement extends HLElement {
+    href(dest) {
+        return this.setAttr("href", dest);
+    }
+    download(value) {
+        return this.setAttr("download", value);
+    }
+    target(where) {
+        return this.setAttr("target", where);
+    }
+}
