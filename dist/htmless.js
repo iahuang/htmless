@@ -3,13 +3,19 @@ class HLElement {
     constructor(tagName, children = []) {
         this.classes = [];
         this.attrs = {};
+        this.inlineStyle = {};
         this.children = [];
+        this.flexboxStyle = null;
         this.tagName = tagName;
         this.children = children;
         this.eventListeners = [];
     }
     setAttr(attr, val = true) {
         this.attrs[attr] = val;
+        return this;
+    }
+    setFlexboxStyle(buildFunction) {
+        this.flexboxStyle = buildFunction(new FlexboxConfig());
         return this;
     }
     onEvent(event, cb, capture = true) {
@@ -33,15 +39,25 @@ class HLElement {
     spellcheck(i) {
         return this.setAttr("spellcheck", i);
     }
+    appendStyleRule(style) {
+        for (let [attr, value] of style.entries()) {
+            this.inlineStyle[attr] = value;
+        }
+        return this;
+    }
     style(style) {
-        return this.setAttr("style", style
+        this.appendStyleRule(style);
+        return this;
+    }
+    buildStyleAttribute() {
+        return (this.inlineStyle
             .entries()
             .map((entry) => {
             let styleAttr = entry[0];
             let value = entry[1];
             return styleAttr + ": " + value + ";";
         })
-            .join(";"));
+            .join(";") + ";");
     }
     class(className) {
         if (className) {
@@ -72,6 +88,9 @@ class HLElement {
     }
     // Represent this HLElement as an HTML Element
     render() {
+        if (this.flexboxStyle) {
+            this.appendStyleRule(this.flexboxStyle.getStylesheetObject());
+        }
         let htmlElement = document.createElement(this.tagName);
         // Set element class(es)
         if (this.classes.length > 0) {
@@ -80,6 +99,10 @@ class HLElement {
         // Set HTML attributes
         for (let [attr, e] of this.attrs.entries()) {
             htmlElement.setAttribute(attr, e);
+        }
+        // Set element style
+        for (let [attr, value] of this.inlineStyle.entries()) {
+            htmlElement.style[attr] = value;
         }
         // Build content
         for (let child of this.children) {
@@ -346,6 +369,87 @@ if (!Object.entries) {
 Object.prototype.entries = function () {
     return Object.entries(this);
 };
+class FlexboxConfig {
+    constructor() {
+        this.direction = "row";
+        this.justify = "start";
+        this.align = "center";
+        this.alignContent = "stretch";
+        this.wrapMode = "nowrap"; // flex-wrap
+    }
+    vertical() {
+        this.direction = "column";
+        return this;
+    }
+    justifyStart() {
+        this.justify = "flex-start";
+        return this;
+    }
+    justifyEnd() {
+        this.justify = "flex-end";
+        return this;
+    }
+    justifyCenter() {
+        this.justify = "center";
+        return this;
+    }
+    justifySpaceApart() {
+        this.justify = "space-between";
+        return this;
+    }
+    justifySpaceEven() {
+        this.justify = "space-evenly";
+        return this;
+    }
+    justifySpaceAround() {
+        this.justify = "space-around";
+        return this;
+    }
+    alignStretch() {
+        this.align = "stretch";
+        return this;
+    }
+    alignStart() {
+        this.align = "flex-start";
+        return this;
+    }
+    alignEnd() {
+        this.align = "flex-end";
+        return this;
+    }
+    alignBaseline() {
+        this.align = "baseline";
+        return this;
+    }
+    alignCenter() {
+        this.align = "center";
+        return this;
+    }
+    getStylesheetString() {
+        return `display: flex; flex-direction: ${this.direction}; justify-content: ${this.justify}; align-items: ${this.align}; align-content: ${this.alignContent}; flex-wrap: ${this.wrapMode}`;
+    }
+    getStylesheetObject() {
+        return {
+            display: "flex",
+            flexDirection: this.direction,
+            justifyContent: this.justify,
+            alignItems: this.align,
+            alignContent: this.alignContent,
+            flexWrap: this.wrapMode,
+        };
+    }
+}
+class StyleClassManager {
+    constructor() {
+        this.styles = new Set();
+    }
+    compressStyle(style) {
+        return style.replace(" ", "");
+    }
+    addStyle(style) {
+        this.styles.add(this.compressStyle(style));
+    }
+}
 class HLInputElement extends HLElement {
     constructor(type) {
         super("input", []);

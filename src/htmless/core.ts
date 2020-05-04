@@ -7,15 +7,15 @@ interface HLEventListener {
 type EventCallback = (ev: Event) => void;
 
 class HLElement {
-    classes: string[];
-    attrs: { [key: string]: any };
-    children: any[];
+    classes: string[] = [];
+    attrs: { [key: string]: any } = {};
+    inlineStyle: { [attr: string]: any } = {};
+    children: any[] = [];
     tagName: string;
     eventListeners: HLEventListener[];
+    flexboxStyle: null | FlexboxConfig = null;
+
     constructor(tagName: string, children: any[] = []) {
-        this.classes = [];
-        this.attrs = {};
-        this.children = [];
         this.tagName = tagName;
         this.children = children;
 
@@ -24,6 +24,11 @@ class HLElement {
 
     setAttr(attr: string, val: string | boolean | number = true) {
         this.attrs[attr] = val;
+        return this;
+    }
+
+    setFlexboxStyle(buildFunction: (f: FlexboxConfig) => FlexboxConfig) {
+        this.flexboxStyle = buildFunction(new FlexboxConfig());
         return this;
     }
 
@@ -50,17 +55,27 @@ class HLElement {
     spellcheck(i: boolean) {
         return this.setAttr("spellcheck", i);
     }
+    appendStyleRule(style: { [attr: string]: string }) {
+        for (let [attr, value] of style.entries()) {
+            this.inlineStyle[attr] = value;
+        }
+        return this;
+    }
     style(style: { [attrName: string]: string }) {
-        return this.setAttr(
-            "style",
-            style
+        this.appendStyleRule(style);
+        return this;
+    }
+
+    buildStyleAttribute() {
+        return (
+            this.inlineStyle
                 .entries()
                 .map((entry) => {
                     let styleAttr = entry[0];
                     let value = entry[1];
                     return styleAttr + ": " + value + ";";
                 })
-                .join(";")
+                .join(";") + ";"
         );
     }
 
@@ -98,6 +113,10 @@ class HLElement {
 
     // Represent this HLElement as an HTML Element
     render() {
+        if (this.flexboxStyle) {
+            this.appendStyleRule(this.flexboxStyle.getStylesheetObject());
+        }
+
         let htmlElement = document.createElement(this.tagName);
 
         // Set element class(es)
@@ -108,6 +127,11 @@ class HLElement {
         // Set HTML attributes
         for (let [attr, e] of this.attrs.entries()) {
             htmlElement.setAttribute(attr, e);
+        }
+
+        // Set element style
+        for (let [attr, value] of this.inlineStyle.entries()) {
+            (htmlElement.style as any)[attr] = value;
         }
 
         // Build content

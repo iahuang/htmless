@@ -9,19 +9,28 @@ declare class HLElement {
     attrs: {
         [key: string]: any;
     };
+    inlineStyle: {
+        [attr: string]: any;
+    };
     children: any[];
     tagName: string;
     eventListeners: HLEventListener[];
+    flexboxStyle: null | FlexboxConfig;
     constructor(tagName: string, children?: any[]);
     setAttr(attr: string, val?: string | boolean | number): this;
+    setFlexboxStyle(buildFunction: (f: FlexboxConfig) => FlexboxConfig): this;
     onEvent(event: string, cb: EventCallback, capture?: boolean): this;
     id(id: string): this;
     contentEditable(i?: boolean): this;
     draggable(i?: boolean): this;
     spellcheck(i: boolean): this;
+    appendStyleRule(style: {
+        [attr: string]: string;
+    }): this;
     style(style: {
         [attrName: string]: string;
     }): this;
+    buildStyleAttribute(): string;
     class(className: string): this;
     italicized(): HLElement;
     strikethrough(): HLElement;
@@ -111,6 +120,41 @@ interface ObjectConstructor {
 }
 interface Object {
     entries(): [string, any][];
+}
+declare class FlexboxConfig {
+    direction: string;
+    justify: string;
+    align: string;
+    alignContent: string;
+    wrapMode: string;
+    constructor();
+    vertical(): this;
+    justifyStart(): this;
+    justifyEnd(): this;
+    justifyCenter(): this;
+    justifySpaceApart(): this;
+    justifySpaceEven(): this;
+    justifySpaceAround(): this;
+    alignStretch(): this;
+    alignStart(): this;
+    alignEnd(): this;
+    alignBaseline(): this;
+    alignCenter(): this;
+    getStylesheetString(): string;
+    getStylesheetObject(): {
+        display: string;
+        flexDirection: string;
+        justifyContent: string;
+        alignItems: string;
+        alignContent: string;
+        flexWrap: string;
+    };
+}
+declare class StyleClassManager {
+    private styles;
+    constructor();
+    compressStyle(style: string): string;
+    addStyle(style: string): void;
 }
 declare class HLInputElement extends HLElement {
     constructor(type: string);
