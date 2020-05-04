@@ -19,7 +19,9 @@ declare class HLElement {
     contentEditable(i?: boolean): this;
     draggable(i?: boolean): this;
     spellcheck(i: boolean): this;
-    style(i: string): this;
+    style(style: {
+        [attrName: string]: string;
+    }): this;
     class(className: string): this;
     italicized(): HLElement;
     strikethrough(): HLElement;

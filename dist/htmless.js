@@ -33,8 +33,15 @@ class HLElement {
     spellcheck(i) {
         return this.setAttr("spellcheck", i);
     }
-    style(i) {
-        return this.setAttr("style", i);
+    style(style) {
+        return this.setAttr("style", style
+            .entries()
+            .map((entry) => {
+            let styleAttr = entry[0];
+            let value = entry[1];
+            return styleAttr + ": " + value + ";";
+        })
+            .join(";"));
     }
     class(className) {
         if (className) {

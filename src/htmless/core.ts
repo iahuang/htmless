@@ -50,8 +50,18 @@ class HLElement {
     spellcheck(i: boolean) {
         return this.setAttr("spellcheck", i);
     }
-    style(i: string) {
-        return this.setAttr("style", i);
+    style(style: { [attrName: string]: string }) {
+        return this.setAttr(
+            "style",
+            style
+                .entries()
+                .map((entry) => {
+                    let styleAttr = entry[0];
+                    let value = entry[1];
+                    return styleAttr + ": " + value + ";";
+                })
+                .join(";")
+        );
     }
 
     class(className: string) {
@@ -150,7 +160,6 @@ class HTMLess {
     inlineComponent(f: () => HLElement) {
         let comp = new InlineComponent();
         comp.body = f;
-
 
         return comp;
     }
@@ -251,7 +260,7 @@ class HTMLess {
     labelComponent(c: Component, label: string) {
         if (c instanceof InlineComponent) {
             let id = this.getComponentId(c);
-            
+
             if (!id) {
                 throw new Error("Cannot label component with no associated ID");
             }
