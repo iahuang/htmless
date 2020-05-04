@@ -1,15 +1,4 @@
 "use strict";
-if (!Object.entries) {
-    Object.entries = function (obj) {
-        var ownProps = Object.keys(obj), i = ownProps.length, resArray = new Array(i); // preallocate the Array
-        while (i--)
-            resArray[i] = [ownProps[i], obj[ownProps[i]]];
-        return resArray;
-    };
-}
-Object.prototype.entries = function () {
-    return Object.entries(this);
-};
 class HLElement {
     constructor(tagName, children = []) {
         this.classes = [];
@@ -114,10 +103,9 @@ class HTMLess {
         this.trackedNodes.set(rendered, component);
         return rendered;
     }
-    inlineComponent(f, id) {
-        let comp = new InlineComponent(id);
+    inlineComponent(f) {
+        let comp = new InlineComponent();
         comp.body = f;
-        this.inlineComponents[id] = comp;
         return comp;
     }
     getInlineComponent(id) {
@@ -192,13 +180,24 @@ class HTMLess {
         }
         throw new Error("Invalid child type");
     }
+    getComponentId(c) {
+        for (let [id, component] of this.inlineComponents.entries()) {
+            if (component === c) {
+                return id;
+            }
+        }
+    }
     labelComponent(c, label) {
         if (c instanceof InlineComponent) {
+            let id = this.getComponentId(c);
+            if (!id) {
+                throw new Error("Cannot label component with no associated ID");
+            }
             if (this.inlineComponentLabels[label]) {
-                this.inlineComponentLabels[label].push(c.id);
+                this.inlineComponentLabels[label].push(id);
             }
             else {
-                this.inlineComponentLabels[label] = [c.id];
+                this.inlineComponentLabels[label] = [id];
             }
         }
         else {
@@ -311,17 +310,24 @@ class Component {
     render() {
         return htmless.renderComponent(this);
     }
+    rerender() {
+        return htmless.rerender(this);
+    }
 }
 class InlineComponent extends Component {
-    constructor(id) {
+    constructor() {
         super();
-        this.id = id;
+    }
+    id(id) {
+        htmless.inlineComponents[id] = this;
+        return this;
     }
     label(l) {
         htmless.labelComponent(this, l);
         return this;
     }
 }
+let inlineComponent = htmless.inlineComponent.bind(htmless);
 if (!Object.entries) {
     Object.entries = function (obj) {
         var ownProps = Object.keys(obj), i = ownProps.length, resArray = new Array(i); // preallocate the Array

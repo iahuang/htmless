@@ -5,13 +5,18 @@ class Component {
     render() {
         return htmless.renderComponent(this);
     }
+    rerender() {
+        return htmless.rerender(this);
+    }
 }
 
 class InlineComponent extends Component {
-    id: string;
-    constructor(id: string) {
+    constructor() {
         super();
-        this.id = id;
+    }
+    id(id: string) {
+        htmless.inlineComponents[id] = this;
+        return this;
     }
     label(l: string) {
         htmless.labelComponent(this, l);
@@ -19,3 +24,4 @@ class InlineComponent extends Component {
     }
 }
 
+let inlineComponent = htmless.inlineComponent.bind(htmless);

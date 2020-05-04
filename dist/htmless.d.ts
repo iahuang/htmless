@@ -1,11 +1,3 @@
-interface ObjectConstructor {
-    entries(obj: {
-        [key: string]: any;
-    }): [string, any][];
-}
-interface Object {
-    entries(): [string, any][];
-}
 interface HLEventListener {
     type: string;
     callback: EventCallback;
@@ -47,7 +39,7 @@ declare class HTMLess {
     };
     constructor();
     renderComponent(component: Component): Node;
-    inlineComponent(f: () => HLElement, id: string): InlineComponent;
+    inlineComponent(f: () => HLElement): InlineComponent;
     getInlineComponent(id: string): Component;
     getInlineComponentsByLabel(label: string): Component[];
     rerenderComponent(component: Component): void;
@@ -55,6 +47,7 @@ declare class HTMLess {
     rerender(x: Component | string): void;
     rerenderLabel(label: string): void;
     valueToNode(value: any): Node;
+    getComponentId(c: InlineComponent): string | undefined;
     labelComponent(c: Component, label: string): void;
 }
 declare function elementFunction(tagName: string, type?: typeof HLElement): (...children: any[]) => HLElement;
@@ -101,12 +94,14 @@ declare let htmless: HTMLess;
 declare class Component {
     body(): HLElement;
     render(): Node;
+    rerender(): void;
 }
 declare class InlineComponent extends Component {
-    id: string;
-    constructor(id: string);
+    constructor();
+    id(id: string): this;
     label(l: string): this;
 }
+declare let inlineComponent: (f: () => HLElement) => InlineComponent;
 interface ObjectConstructor {
     entries(obj: {
         [key: string]: any;

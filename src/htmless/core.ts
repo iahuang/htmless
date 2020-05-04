@@ -147,11 +147,11 @@ class HTMLess {
         return rendered;
     }
 
-    inlineComponent(f: () => HLElement, id: string) {
-        let comp = new InlineComponent(id);
+    inlineComponent(f: () => HLElement) {
+        let comp = new InlineComponent();
         comp.body = f;
 
-        this.inlineComponents[id] = comp;
+
         return comp;
     }
 
@@ -240,12 +240,26 @@ class HTMLess {
         throw new Error("Invalid child type");
     }
 
+    getComponentId(c: InlineComponent) {
+        for (let [id, component] of this.inlineComponents.entries()) {
+            if (component === c) {
+                return id;
+            }
+        }
+    }
+
     labelComponent(c: Component, label: string) {
         if (c instanceof InlineComponent) {
+            let id = this.getComponentId(c);
+            
+            if (!id) {
+                throw new Error("Cannot label component with no associated ID");
+            }
+
             if (this.inlineComponentLabels[label]) {
-                this.inlineComponentLabels[label].push(c.id);
+                this.inlineComponentLabels[label].push(id);
             } else {
-                this.inlineComponentLabels[label] = [c.id];
+                this.inlineComponentLabels[label] = [id];
             }
         } else {
             throw new Error("Cannot label non-inline component");
