@@ -113,11 +113,6 @@ declare class InlineComponent extends Component {
     label(l: string): this;
 }
 declare let inlineComponent: (f: () => HLElement) => InlineComponent;
-interface ObjectConstructor {
-    entries(obj: {
-        [key: string]: any;
-    }): [string, any][];
-}
 interface Object {
     entries(): [string, any][];
 }

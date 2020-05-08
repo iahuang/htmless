@@ -136,6 +136,9 @@ class HLElement {
 
         // Build content
         for (let child of this.children) {
+            if (child === null) {
+                continue;
+            }
             let childNode = htmless.valueToNode(child);
             htmlElement.appendChild(childNode);
         }
