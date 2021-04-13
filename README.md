@@ -1,3 +1,5 @@
+## This project has been replaced by [H.js](https://github.com/iahuang/hjs) and this repository will no longer be maintained.
+
 # htmless
 
 Write HTML code without writing HTML code. The integration with Javascript allowes for a much tighter relationship between your code and your UI, which is important in modern webapps. Technologies like React's JSX syntax exist, although these require the use of extra toolchains such as babel.
